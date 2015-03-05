@@ -5,18 +5,22 @@
 //DONE random playback mode
 //DONE automatic playlist saving and opening
 //DONE make shuffle button to work
-//		ADDING FILES
+///		ADDING FILES
 //DONE adding multiple folders
 //TODO custom folders adding dialog with "include subfolders" checkbox
-//		REMOVING FILES
+///		REMOVING FILES
 //DONE pop-up menu when remove button pressed
 //DONE remove selected files
 //DONE remove all files
 //TODO remove duplicates
 
 //TODO sorting playlist
-//TODO if song description (author, title, etc.) is avaliable display that data instead of file name
+//TODO if song description (author, title, etc.) is avaliable- display that data instead of file name
 //DONE app crashes when "play" pressed with empty playlist
+///     SETTINGS
+//DONE add settings icon to main window
+//DONE small dialog opens when settings button is pressed
+//TODO choosing where to store playlist file
 
 MusicPlayer::MusicPlayer(QObject *parent) : QObject(parent)
 {
@@ -75,7 +79,11 @@ qint64 MusicPlayer::currentSongDuration()
 
 void MusicPlayer::setPosition(qint64 newPosition)
 {
+    player->pause();
+    QThread::msleep(50);
 	player->setPosition(newPosition);
+    QThread::msleep(50);
+    player->play();
 }
 
 int MusicPlayer::getCurrentSongNumber()

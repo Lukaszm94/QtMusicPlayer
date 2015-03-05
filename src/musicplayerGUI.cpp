@@ -1,5 +1,6 @@
 #include "musicplayerGUI.h"
 #include <QtWidgets>
+#include <QVBoxLayout>
 #include <chrono>
 
 
@@ -7,7 +8,13 @@ MusicPlayerGui::MusicPlayerGui(QWidget *parent) :QMainWindow(parent), playlistFi
 {
 	player = new MusicPlayer;
 	setupGui();
-	loadPlaylist(playlistFilePath);
+    loadSettings();
+    loadPlaylist(playlistLocation + "/playlist.pla");
+}
+
+QString MusicPlayerGui::getPlaylistLocation()
+{
+    return playlistLocation;
 }
 
 void MusicPlayerGui::play()
@@ -132,7 +139,7 @@ void MusicPlayerGui::closeEvent(QCloseEvent *event)
 		out << player->getPlaylist()->at(i);
 	}
 	saveFile.close();
-
+    saveSettings();
 	event->accept();
 }
 
@@ -170,7 +177,31 @@ void MusicPlayerGui::shuffleButtonToggled(bool shuffleModeOn)
 		player->setPlaybackMode(MusicPlayer::Random);
 	} else {
 		player->setPlaybackMode(MusicPlayer::Loop);
-	}
+    }
+}
+
+void MusicPlayerGui::openSettingsDialog()
+{
+    QDialog *settingsDialog = new SettingsDialog(this);
+
+    settingsDialog->show();
+}
+
+void MusicPlayerGui::loadSettings()
+{
+    QSettings settings("Meyer Technologies", "Simplicity");
+    settings.beginGroup("player");
+    setPlaylistLocation(settings.value("playlistLocation").toString());
+    settings.endGroup();
+    qDebug() << "Playlist locations read from settings: "<<playlistLocation;
+}
+
+void MusicPlayerGui::saveSettings()
+{
+    QSettings settings("Meyer Technologies", "Simplicity");
+    settings.beginGroup("player");
+    settings.setValue("playlistLocation", playlistLocation);
+    settings.endGroup();
 }
 
 void MusicPlayerGui::setupGui()
@@ -259,12 +290,17 @@ void MusicPlayerGui::setupGui()
     shuffleButton->setIcon(QIcon(":/icons/icons/shuffle.png"));
 	shuffleButton->setCheckable(true);
 
+    settingsButton = new QPushButton;
+    settingsButton->setIcon(QIcon(":/icons/icons/settings.png"));
+
+
 	bottomLayout = new QHBoxLayout;
 	bottomLayout->addWidget(addSongButton);
 	bottomLayout->addWidget(delButton);
 	bottomLayout->addWidget(sortButton);
 	bottomLayout->addStretch();
-	bottomLayout->addWidget(shuffleButton);
+    bottomLayout->addWidget(shuffleButton);
+    bottomLayout->addWidget(settingsButton);
 
 	mainLayout = new QVBoxLayout;
 	mainLayout->addWidget(songTitleTicker);
@@ -288,6 +324,7 @@ void MusicPlayerGui::setupGui()
 	connect(player, SIGNAL(durationChanged(qint64)), this, SLOT(songDurationChanged(qint64)));
 	connect(songProgressBar, SIGNAL(pressedValue(qint64)), this, SLOT(progressBarClicked(qint64)));
 	connect(shuffleButton, SIGNAL(toggled(bool)), this, SLOT(shuffleButtonToggled(bool)));
+    connect(settingsButton, SIGNAL(clicked()), this, SLOT(openSettingsDialog()));
 }
 
 void MusicPlayerGui::loadPlaylist(QString playlistFileName)
@@ -301,5 +338,101 @@ void MusicPlayerGui::loadPlaylist(QString playlistFileName)
 			player->getPlaylist()->addSong(fileName);
 		}
 		saveFile.close();
-	}
+    }
+}
+
+void MusicPlayerGui::setPlaylistLocation(QString newLocation)
+{
+    if(newLocation.isEmpty()) {
+        newLocation = "."; //current folder
+        QFileInfo info(newLocation);
+        newLocation = info.absoluteFilePath(); //convert '.' to full (absolute) file path
+    }
+    playlistLocation = newLocation;
+    qDebug() << "New playlist location: "<<newLocation;
+}
+
+
+SettingsDialog::SettingsDialog(MusicPlayerGui *parent)
+{
+    this->setWindowTitle("Settings");
+    this->setModal(true);
+    playerGui = parent;
+    QLabel *choosePlaylistLocationLabel = new QLabel("Choose where Simplicity should store playlist file:");
+    choosePlaylistLocationButton = new QPushButton("Browse", this);
+    locationLineEdit = new QLineEdit(this);
+    locationLineEdit->setText(parent->getPlaylistLocation());
+    locationLineEdit->setReadOnly(true);
+
+    applyButton = new QPushButton("Apply");
+    cancelButton = new QPushButton("Cancel");
+    okButton = new QPushButton("Ok");
+
+    QHBoxLayout *locationLayout = new QHBoxLayout();
+    QHBoxLayout *buttonsLayout = new QHBoxLayout();
+    QVBoxLayout *mainSettingsLayout = new QVBoxLayout();
+
+    locationLayout->addWidget(locationLineEdit);
+    locationLayout->addWidget(choosePlaylistLocationButton);
+
+    buttonsLayout->addWidget(applyButton);
+    buttonsLayout->addWidget(cancelButton);
+    buttonsLayout->addWidget(okButton);
+
+    mainSettingsLayout->addWidget(choosePlaylistLocationLabel);
+    mainSettingsLayout->addLayout(locationLayout);
+    mainSettingsLayout->addLayout(buttonsLayout);
+    this->setLayout(mainSettingsLayout);
+
+
+    connect(choosePlaylistLocationButton, SIGNAL(clicked()), this, SLOT(choosePlaylistLocationButtonPressed()));
+    connect(applyButton, SIGNAL(clicked()), this, SLOT(applyButtonClicked()));
+    connect(cancelButton, SIGNAL(clicked()), this, SLOT(cancelButtonClicked()));
+    connect(okButton, SIGNAL(clicked()), this, SLOT(okButtonClicked()));
+
+}
+
+void SettingsDialog::choosePlaylistLocationButtonPressed()
+{
+    QFileDialog foldersDialog;
+    foldersDialog.setFileMode(QFileDialog::DirectoryOnly);
+    foldersDialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    foldersDialog.setDirectory("/home/lukaszlinux");
+    QListView *l = foldersDialog.findChild<QListView*>("listView");
+    if (l) {
+        l->setSelectionMode(QAbstractItemView::SingleSelection);
+    }
+    QTreeView *t = foldersDialog.findChild<QTreeView*>();
+    if (t) {
+        t->setSelectionMode(QAbstractItemView::SingleSelection);
+    }
+    QString folderName;
+    if(foldersDialog.exec()) {
+        folderName = foldersDialog.selectedFiles().first();
+        setUserChosenPlaylistFolder(folderName);
+        qDebug() << "Chosen folder: "<< folderName;
+    }
+}
+
+void SettingsDialog::applyButtonClicked()
+{
+    if(!userChosenPlaylistFolder.isEmpty())
+    this->playerGui->setPlaylistLocation(userChosenPlaylistFolder);
+}
+
+void SettingsDialog::cancelButtonClicked()
+{
+    this->close();
+}
+
+void SettingsDialog::okButtonClicked()
+{
+    this->applyButtonClicked();
+    this->close();
+}
+
+void SettingsDialog::setUserChosenPlaylistFolder(QString folderName)
+{
+    userChosenPlaylistFolder = folderName;
+    locationLineEdit->setText(userChosenPlaylistFolder);
 }

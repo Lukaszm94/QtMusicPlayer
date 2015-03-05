@@ -16,9 +16,11 @@ class QSlider;
 class MusicPlayerGui : public QMainWindow {
 
 	Q_OBJECT
+    friend class SettingsDialog;
 
 public:
 	MusicPlayerGui(QWidget *parent = 0);
+    QString getPlaylistLocation();
 
 public slots:
 	void play();
@@ -40,12 +42,15 @@ public slots:
 	void songDurationChanged(qint64 duration);
 	void progressBarClicked(qint64 value);
 	void shuffleButtonToggled(bool shuffleModeOn);
+    void openSettingsDialog();
 
 
 private:
-
+    void loadSettings();
+    void saveSettings();
 	void setupGui();
 	void loadPlaylist(QString playlistFileName);
+    void setPlaylistLocation(QString newLocation);
 
 	ProgressBar *songProgressBar;
 	Ticker *songTitleTicker;
@@ -64,16 +69,41 @@ private:
 	QPushButton *delButton;
 	QPushButton *sortButton;
 	QPushButton *shuffleButton;
+    QPushButton *settingsButton;
 
 	QVBoxLayout *mainLayout;
 	QHBoxLayout *bottomLayout;
 
+    QString playlistLocation;
 	MusicPlayer *player;
 
 	const QString playlistFilePath;
 
+};
 
+class SettingsDialog : public QDialog {
+    Q_OBJECT
+public:
+    SettingsDialog(MusicPlayerGui *parent = 0);
 
+public slots:
+    void choosePlaylistLocationButtonPressed();
+    void applyButtonClicked();
+    void cancelButtonClicked();
+    void okButtonClicked();
+
+private:
+    void setUserChosenPlaylistFolder(QString folderName);
+
+    QPushButton *choosePlaylistLocationButton;
+    QPushButton *applyButton;
+    QPushButton *cancelButton;
+    QPushButton *okButton;
+
+    QLineEdit *locationLineEdit;
+
+    QString userChosenPlaylistFolder;
+    MusicPlayerGui *playerGui;
 
 
 };

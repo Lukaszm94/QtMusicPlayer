@@ -4,7 +4,7 @@
 
 MusicPlaylist::MusicPlaylist(QObject *parent) : QObject(parent)
 {
-	playlistList = new QStringList;
+    playlistList = new QList<Song>;
 	playlistList->clear();
 	songsCount = 0;
 }
@@ -14,8 +14,8 @@ bool MusicPlaylist::addSong(QString fileName)
 	if(fileName.isEmpty()) {
 		return false;
 	}
-
-	*playlistList << fileName;
+    Song newSong(fileName);
+    playlistList->push_back(newSong);
 	emit playlistChanged();
 
 	return true;
@@ -26,8 +26,10 @@ bool MusicPlaylist::addSongs(QStringList fileNames)
 	if(fileNames.isEmpty()) {
 		return false;
 	}
+    Song newSong;
 	for(QStringList::iterator it = fileNames.begin(); it != fileNames.end(); it++) {
-		*playlistList << *it;
+        newSong.setFilePath(*it);
+        playlistList->push_back(newSong);
 	}
 	emit playlistChanged();
 
@@ -67,7 +69,7 @@ bool MusicPlaylist::removeAllSongs()
 	return true;
 }
 
-QString MusicPlaylist::at(int position)
+Song MusicPlaylist::at(int position)
 {
 	return playlistList->at(position);
 }
@@ -81,8 +83,8 @@ QStringList MusicPlaylist::toQStringListWithNumbers()
 {
 	QStringList playlistWithNumbers;
 	int i = 1;
-	for(QStringList::iterator it = playlistList->begin(); it != playlistList->end();  it++, i++) {
-		playlistWithNumbers << QString::number(i) + ". " + QFileInfo(*it).fileName();
+    for(QList<Song>::iterator it = playlistList->begin(); it != playlistList->end();  it++, i++) {
+        playlistWithNumbers << QString::number(i) + ". " + QFileInfo((*it).getFilePath()).fileName();
 	}
 	return playlistWithNumbers;
 }

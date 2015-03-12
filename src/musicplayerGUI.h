@@ -42,12 +42,14 @@ public slots:
 	void songDurationChanged(qint64 duration);
 	void progressBarClicked(qint64 value);
 	void shuffleButtonToggled(bool shuffleModeOn);
+    void setPlayerPlaybackMode(MusicPlayer::PlaybackMode newMode);
     void openSettingsDialog();
 
 
 private:
     void loadSettings();
     void saveSettings();
+    void savePlaylist();
 	void setupGui();
 	void loadPlaylist(QString playlistFileName);
     void setPlaylistLocation(QString newLocation);
@@ -74,38 +76,12 @@ private:
 	QVBoxLayout *mainLayout;
 	QHBoxLayout *bottomLayout;
 
+    QString playlistFileName;
     QString playlistLocation;
 	MusicPlayer *player;
 
-	const QString playlistFilePath;
 
 };
 
-class SettingsDialog : public QDialog {
-    Q_OBJECT
-public:
-    SettingsDialog(MusicPlayerGui *parent = 0);
-
-public slots:
-    void choosePlaylistLocationButtonPressed();
-    void applyButtonClicked();
-    void cancelButtonClicked();
-    void okButtonClicked();
-
-private:
-    void setUserChosenPlaylistFolder(QString folderName);
-
-    QPushButton *choosePlaylistLocationButton;
-    QPushButton *applyButton;
-    QPushButton *cancelButton;
-    QPushButton *okButton;
-
-    QLineEdit *locationLineEdit;
-
-    QString userChosenPlaylistFolder;
-    MusicPlayerGui *playerGui;
-
-
-};
 
 #endif // MUSICPLAYERGUI_H

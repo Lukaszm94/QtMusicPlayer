@@ -2,6 +2,7 @@
 #define MUSICPLAYLIST_H
 
 #include <QtMultimedia>
+#include "song.h"
 
 class MusicPlaylist : public QObject {
 	Q_OBJECT
@@ -14,13 +15,13 @@ public:
 	bool removeSongs(QVector<int>);
 	bool removeAllSongs();
 	QStringList toQStringListWithNumbers();
-	QString at(int position); //returns full file path
+    Song at(int position); //returns full file path
 	int size();
 
 
 
 private:
-	QStringList *playlistList;
+    QList<Song> *playlistList;
 
 	int songsCount;
 

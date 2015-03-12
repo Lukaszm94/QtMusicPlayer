@@ -5,6 +5,7 @@
 //DONE random playback mode
 //DONE automatic playlist saving and opening
 //DONE make shuffle button to work
+//DONE save/load shuffle button to/from settings
 ///		ADDING FILES
 //DONE adding multiple folders
 //TODO custom folders adding dialog with "include subfolders" checkbox
@@ -20,7 +21,9 @@
 ///     SETTINGS
 //DONE add settings icon to main window
 //DONE small dialog opens when settings button is pressed
-//TODO choosing where to store playlist file
+//DONE choosing where to store playlist file
+///     PLAYER
+//TODO changing position by pressing progress bar- use separate thread to slowly increase volume from 0 to set value to avoid noise
 
 MusicPlayer::MusicPlayer(QObject *parent) : QObject(parent)
 {
@@ -46,7 +49,7 @@ void MusicPlayer::play()
 		return;
 	ignoreStateChangedSignal = true;
 	if(player->state() == QMediaPlayer::StoppedState) {
-        player->setMedia(QUrl::fromLocalFile(currentPlaylist->at(currentSongNumber)));
+        player->setMedia(QUrl::fromLocalFile(currentPlaylist->at(currentSongNumber).getFilePath()));
 	}
 	player->play();
 	emit songChanged();
@@ -64,12 +67,12 @@ void MusicPlayer::play(int newSongNumber, bool addToPreviousSongsList)
 
 	currentSongNumber = newSongNumber;
 	ignoreStateChangedSignal = true;
-    player->setMedia(QUrl::fromLocalFile(currentPlaylist->at(currentSongNumber)));
+    player->setMedia(QUrl::fromLocalFile(currentPlaylist->at(currentSongNumber).getFilePath()));
 	player->play();
 	emit songChanged();
 	ignoreStateChangedSignal = false;
 	qDebug() << "Currently playing: "<< QString::number(currentSongNumber);
-    QString fileName = currentPlaylist->at(currentSongNumber);
+    QString fileName = currentPlaylist->at(currentSongNumber).getFileName();
 }
 
 qint64 MusicPlayer::currentSongDuration()
@@ -79,11 +82,28 @@ qint64 MusicPlayer::currentSongDuration()
 
 void MusicPlayer::setPosition(qint64 newPosition)
 {
-    player->pause();
-    QThread::msleep(50);
-	player->setPosition(newPosition);
-    QThread::msleep(50);
-    player->play();
+    int volume = player->volume();
+    /*
+    while(player->volume() != 0) {
+        player->setVolume(player->volume() - 1);
+        QThread::msleep(1);
+    }
+    player->setPosition(newPosition);
+    while(player->volume() != volume) {
+        player->setVolume(player->volume() + 1);
+        QThread::msleep(1);
+    }
+    */
+
+    const int delayTime = 4;
+
+    player->setVolume(0);
+    //QThread::msleep(delayTime);
+    player->setPosition(newPosition);
+    QThread::msleep(delayTime);
+    player->setVolume(volume);
+
+
 }
 
 int MusicPlayer::getCurrentSongNumber()

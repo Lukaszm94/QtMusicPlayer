@@ -3,6 +3,10 @@
 #include <QtWidgets>
 #include <QVBoxLayout>
 #include <chrono>
+#include "id3/tag.h"
+#include <id3.h>
+#include <id3/id3lib_frame.h>
+#include <id3/misc_support.h>
 
 
 MusicPlayerGui::MusicPlayerGui(QWidget *parent) :QMainWindow(parent), playlistFileName("playlist.pla")
@@ -11,6 +15,16 @@ MusicPlayerGui::MusicPlayerGui(QWidget *parent) :QMainWindow(parent), playlistFi
 	setupGui();
     loadSettings();
     loadPlaylist(playlistLocation + "/" + playlistFileName);
+
+    ID3_Tag myTag;
+    myTag.Link("abc.mp3");
+    qDebug()<<ID3_GetArtist(&myTag);
+    /*ID3_Tag::Iterator* iter = myTag.CreateIterator();
+      ID3_Frame* myFrame = NULL;
+      while (NULL != (myFrame = iter->GetNext()))
+      {
+        qDebug()<<myFrame->GetDescription()<<": "<<myFrame->GetField(ID3FN_TEXT)->GetRawText();
+      }*/
 }
 
 QString MusicPlayerGui::getPlaylistLocation()
@@ -71,6 +85,24 @@ void MusicPlayerGui::addSong()
 {
 	QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Add songs"), "G:/Muzyka", tr("Music (*.mp3)"));
 	player->getPlaylist()->addSongs(fileNames);
+    foreach(QString name , fileNames)
+    {
+        ID3_Tag myTag;
+        myTag.Link(name.toStdString().c_str());
+        qDebug() <<"Song: "<< name;
+        ID3_Frame* myFrame;
+        if ( myFrame = myTag.Find ( ID3FID_TITLE ) )
+        {
+            char title[ 1024 ];
+
+            myFrame->Field ( ID3FN_TEXT ).Get ( title, 1024 );
+
+            qDebug() << "Title: " << title;
+        } else {
+            qDebug() << "Unable to find tag ALBUM";
+        }
+    }
+
 }
 
 void MusicPlayerGui::addFolder()

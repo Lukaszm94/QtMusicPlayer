@@ -1,5 +1,7 @@
 QT += widgets multimedia
+LIBS += -lid3 -lz
 CONFIG += c++11
+
 HEADERS += \
     src/musicplayer.h \
     src/musicplayerGUI.h \
@@ -20,3 +22,4 @@ SOURCES += \
 
 RESOURCES += \
     icons.qrc
+

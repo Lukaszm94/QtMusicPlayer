@@ -2,6 +2,7 @@
 #define SONG_H
 #include <QObject>
 #include <QFileInfo>
+#include <id3/tag.h>
 
 class Song : public QObject {
     Q_OBJECT
@@ -28,7 +29,10 @@ public:
     QString getFilePath() const { return fullFilePath; }
     void setFilePath(QString newPath) { fullFilePath = newPath; }
     QString getFileName() { return extractFileName(fullFilePath); }
-    QString getTitle() { return extractFileName(fullFilePath); } //just temporary
+    QString getTitle()
+    {
+        return extractFileName(fullFilePath);
+    }
 
 private:
     QString extractFileName(QString path)
